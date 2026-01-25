@@ -15,10 +15,19 @@ st.set_page_config(
 
 st.title("Peer Duty Subject Assignment System")
 
-st.markdown("""
-This system generates **weekly peer duty subject assignments**
-using a deterministic random seed.
-""")
+# -------------------------------------------------
+# Date & Week Information
+# -------------------------------------------------
+generation_datetime = datetime.now()
+generation_date_str = generation_datetime.strftime("%d-%m-%Y")
+week_seed = generation_datetime.strftime("%Y-%U")
+
+st.markdown(
+    f"""
+    **Generation Date:** {generation_date_str}  
+    **Week ID:** {week_seed}
+    """
+)
 
 # -------------------------------------------------
 # Excel File Path (From GitHub Repo)
@@ -40,6 +49,11 @@ if st.button("Generate / Regenerate Weekly Assignment"):
     with st.spinner("Generating assignment..."):
 
         # -----------------------------
+        # Weekly Random Seed
+        # -----------------------------
+        random.seed(week_seed)
+
+        # -----------------------------
         # Load Excel Sheets
         # -----------------------------
         peerslots = pd.read_excel(FILE_PATH, sheet_name="Peerslots")
@@ -51,12 +65,6 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         peerslots = peerslots[
             peerslots["Status"].str.lower() == "free"
         ].copy()
-
-        # -----------------------------
-        # Weekly Random Seed
-        # -----------------------------
-        week_seed = datetime.now().strftime("%Y-%U")
-        random.seed(week_seed)
 
         # -----------------------------
         # Assignment Logic
@@ -89,10 +97,14 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         peerslots["Assigned Subject"] = assigned_subjects
         peerslots["Observed Faculty"] = assigned_faculty
 
+        # Add Date & Week Columns
+        peerslots["Assignment Date"] = generation_date_str
+        peerslots["Assignment Week"] = week_seed
+
         # -----------------------------
         # Display Result
         # -----------------------------
-        st.success(f"Assignment generated for Week: {week_seed}")
+        st.success("Assignment generated successfully.")
         st.dataframe(peerslots, use_container_width=True)
 
         # -----------------------------
@@ -102,7 +114,9 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         peerslots.to_excel(output, index=False, engine="openpyxl")
         output.seek(0)
 
-        output_filename = f"Peer_Duty_Subject_Assignment_Week_{week_seed}.xlsx"
+        output_filename = (
+            f"Peer_Duty_Assignment_{generation_date_str}_Week_{week_seed}.xlsx"
+        )
 
         st.download_button(
             label="Download Assignment Excel",
