@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 st.image(
-    "college_logo.png",
+    "gitm.png",
     width=150
 )
 
