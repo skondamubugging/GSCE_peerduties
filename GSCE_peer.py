@@ -18,7 +18,7 @@ st.image(
     width=150
 )
 
-st.title("Peer Duty Subject Assignment System")
+st.title("GSCE - Peer to Peer Duties Assignment")
 
 st.markdown("""
 This system generates **weekly peer duty subject assignments**
