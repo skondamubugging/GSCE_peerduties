@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 import os
 
@@ -16,31 +16,39 @@ st.set_page_config(
 st.title("Peer Duty Subject Assignment System")
 
 # -------------------------------------------------
-# Date & Week Information
+# Week & Date Setup
 # -------------------------------------------------
-generation_datetime = datetime.now()
-generation_date_str = generation_datetime.strftime("%d-%m-%Y")
-week_seed = generation_datetime.strftime("%Y-%U")
+today = datetime.now()
+week_seed = today.strftime("%Y-%U")
 
-st.markdown(
-    f"""
-    **Generation Date:** {generation_date_str}  
-    **Week ID:** {week_seed}
-    """
-)
+# Get Monday of the current week
+week_monday = today - timedelta(days=today.weekday())
+
+DAY_OFFSET = {
+    "monday": 0,
+    "tuesday": 1,
+    "wednesday": 2,
+    "thursday": 3,
+    "friday": 4,
+    "saturday": 5,
+    "sunday": 6
+}
 
 # -------------------------------------------------
-# Excel File Path (From GitHub Repo)
+# Excel File Path
 # -------------------------------------------------
 FILE_PATH = "Peer_Job_Fixedslots.xlsx"
 
 if not os.path.exists(FILE_PATH):
-    st.error(
-        "Required file `Peer_Job_Fixedslots.xlsx` not found in the repository."
-    )
+    st.error("Required file `Peer_Job_Fixedslots.xlsx` not found.")
     st.stop()
 
-st.success("Excel file loaded from repository.")
+st.markdown(
+    f"""
+    **Assignment Week:** {week_seed}  
+    **Week Starting (Monday):** {week_monday.strftime("%d-%m-%Y")}
+    """
+)
 
 # -------------------------------------------------
 # Generate Assignment Button
@@ -48,9 +56,6 @@ st.success("Excel file loaded from repository.")
 if st.button("Generate / Regenerate Weekly Assignment"):
     with st.spinner("Generating assignment..."):
 
-        # -----------------------------
-        # Weekly Random Seed
-        # -----------------------------
         random.seed(week_seed)
 
         # -----------------------------
@@ -71,6 +76,7 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         # -----------------------------
         assigned_subjects = []
         assigned_faculty = []
+        assignment_dates = []
 
         for _, peer in peerslots.iterrows():
             day = peer["Day"]
@@ -91,14 +97,22 @@ if st.button("Generate / Regenerate Weekly Assignment"):
                 assigned_subjects.append("No Subject Available")
                 assigned_faculty.append("NA")
 
+            # -----------------------------
+            # Day → Date Mapping
+            # -----------------------------
+            day_key = str(day).strip().lower()
+            if day_key in DAY_OFFSET:
+                assignment_date = week_monday + timedelta(days=DAY_OFFSET[day_key])
+                assignment_dates.append(assignment_date.strftime("%d-%m-%Y"))
+            else:
+                assignment_dates.append("Invalid Day")
+
         # -----------------------------
         # Update Result
         # -----------------------------
         peerslots["Assigned Subject"] = assigned_subjects
         peerslots["Observed Faculty"] = assigned_faculty
-
-        # Add Date & Week Columns
-        peerslots["Assignment Date"] = generation_date_str
+        peerslots["Assignment Date"] = assignment_dates
         peerslots["Assignment Week"] = week_seed
 
         # -----------------------------
@@ -108,19 +122,17 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         st.dataframe(peerslots, use_container_width=True)
 
         # -----------------------------
-        # Prepare Download
+        # Download
         # -----------------------------
         output = BytesIO()
         peerslots.to_excel(output, index=False, engine="openpyxl")
         output.seek(0)
 
-        output_filename = (
-            f"Peer_Duty_Assignment_{generation_date_str}_Week_{week_seed}.xlsx"
-        )
+        filename = f"Peer_Duty_Assignment_Week_{week_seed}.xlsx"
 
         st.download_button(
             label="Download Assignment Excel",
             data=output,
-            file_name=output_filename,
+            file_name=filename,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
