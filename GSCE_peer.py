@@ -3,6 +3,7 @@ import pandas as pd
 import random
 from datetime import datetime
 from io import BytesIO
+import os
 
 # -------------------------------------------------
 # Streamlit Page Config
@@ -15,35 +16,34 @@ st.set_page_config(
 st.title("Peer Duty Subject Assignment System")
 
 st.markdown("""
-This application assigns **peer duty subjects** based on:
-- Matching **Day** and **Time Slot**
-- Excluding self-observation
-- Weekly deterministic randomization
+This system generates **weekly peer duty subject assignments**
+using a deterministic random seed.
 """)
 
 # -------------------------------------------------
-# Upload Excel File
+# Excel File Path (From GitHub Repo)
 # -------------------------------------------------
-uploaded_file = st.file_uploader(
-    "Upload Peer_Job_Fixedslots.xlsx",
-    type=["xlsx"]
-)
+FILE_PATH = "Peer_Job_Fixedslots.xlsx"
 
-if uploaded_file is None:
-    st.info("Please upload the Excel file to proceed.")
+if not os.path.exists(FILE_PATH):
+    st.error(
+        "Required file `Peer_Job_Fixedslots.xlsx` not found in the repository."
+    )
     st.stop()
+
+st.success("Excel file loaded from repository.")
 
 # -------------------------------------------------
 # Generate Assignment Button
 # -------------------------------------------------
 if st.button("Generate / Regenerate Weekly Assignment"):
-    with st.spinner("Processing assignment..."):
+    with st.spinner("Generating assignment..."):
 
         # -----------------------------
         # Load Excel Sheets
         # -----------------------------
-        peerslots = pd.read_excel(uploaded_file, sheet_name="Peerslots")
-        busy_fac = pd.read_excel(uploaded_file, sheet_name="Busy_fac")
+        peerslots = pd.read_excel(FILE_PATH, sheet_name="Peerslots")
+        busy_fac = pd.read_excel(FILE_PATH, sheet_name="Busy_fac")
 
         # -----------------------------
         # Filter FREE peer slots
@@ -96,7 +96,7 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         st.dataframe(peerslots, use_container_width=True)
 
         # -----------------------------
-        # Prepare Excel Download
+        # Prepare Download
         # -----------------------------
         output = BytesIO()
         peerslots.to_excel(output, index=False, engine="openpyxl")
