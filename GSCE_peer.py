@@ -1,177 +1,112 @@
+import streamlit as st
 import pandas as pd
 import random
-import streamlit as st
-import logging
-from datetime import datetime, timedelta
+from datetime import datetime
+from io import BytesIO
 
-# Suppress Streamlit warnings
-logging.getLogger("streamlit").setLevel(logging.ERROR)
+# -------------------------------------------------
+# Streamlit Page Config
+# -------------------------------------------------
+st.set_page_config(
+    page_title="Peer Duty Subject Assignment",
+    layout="wide"
+)
 
-# -----------------------------------
-# Function to generate peer assignments
-# -----------------------------------
-def generate_peer_assignments(input_file):
+st.title("Peer Duty Subject Assignment System")
 
-    # -------------------------------
-    # Weekly randomness
-    # -------------------------------
-    week_seed = datetime.now().strftime("%Y-%U")
-    random.seed(week_seed)
+st.markdown("""
+This application assigns **peer duty subjects** based on:
+- Matching **Day** and **Time Slot**
+- Excluding self-observation
+- Weekly deterministic randomization
+""")
 
-    # -------------------------------
-    # Calculate Week Start & End Date
-    # -------------------------------
-    today = datetime.today()
-    week_start = today - timedelta(days=today.weekday())   # Monday
-    week_end = week_start + timedelta(days=4)              # Friday
+# -------------------------------------------------
+# Upload Excel File
+# -------------------------------------------------
+uploaded_file = st.file_uploader(
+    "Upload Peer_Job_Fixedslots.xlsx",
+    type=["xlsx"]
+)
 
-    week_start_str = week_start.strftime("%d-%m-%Y")
-    week_end_str = week_end.strftime("%d-%m-%Y")
+if uploaded_file is None:
+    st.info("Please upload the Excel file to proceed.")
+    st.stop()
 
-    # -------------------------------
-    # Read Excel
-    # -------------------------------
-    peerslots = pd.read_excel(input_file, sheet_name="Peerslots")
-    busy_fac = pd.read_excel(input_file, sheet_name="Busy_fac")
+# -------------------------------------------------
+# Generate Assignment Button
+# -------------------------------------------------
+if st.button("Generate / Regenerate Weekly Assignment"):
+    with st.spinner("Processing assignment..."):
 
-    peerslots.columns = peerslots.columns.str.strip()
-    busy_fac.columns = busy_fac.columns.str.strip()
+        # -----------------------------
+        # Load Excel Sheets
+        # -----------------------------
+        peerslots = pd.read_excel(uploaded_file, sheet_name="Peerslots")
+        busy_fac = pd.read_excel(uploaded_file, sheet_name="Busy_fac")
 
-    free_peers = peerslots[peerslots["Status"].str.lower() == "free"]
+        # -----------------------------
+        # Filter FREE peer slots
+        # -----------------------------
+        peerslots = peerslots[
+            peerslots["Status"].str.lower() == "free"
+        ].copy()
 
-    peer_assignments = []
-    assigned_peers = set()
+        # -----------------------------
+        # Weekly Random Seed
+        # -----------------------------
+        week_seed = datetime.now().strftime("%Y-%U")
+        random.seed(week_seed)
 
-    # -------------------------------
-    # Assignment Logic
-    # -------------------------------
-    for (day, slot), free_group in free_peers.groupby(["Day", "Time Slot"]):
+        # -----------------------------
+        # Assignment Logic
+        # -----------------------------
+        assigned_subjects = []
+        assigned_faculty = []
 
-        busy_classes = busy_fac[
-            (busy_fac["Day"] == day) &
-            (busy_fac["Time Slot"] == slot)
-        ]
+        for _, peer in peerslots.iterrows():
+            day = peer["Day"]
+            time_slot = peer["Time Slot"]
+            peer_emp_id = peer["Emp ID"]
 
-        if busy_classes.empty or free_group.empty:
-            peer_assignments.append({
-                "Week Start Date": week_start_str,
-                "Week End Date": week_end_str,
-                "Day": day,
-                "Time Slot": slot,
-                "Faculty Name": "None",
-                "Class": "No Class",
-                "Peer Faculty": "None",
-                "Alternative Faculty": "None"
-            })
-            continue
-
-        chosen_class = busy_classes.sample(1).iloc[0]
-
-        eligible_peers = free_group[
-            free_group["Emp ID"] != chosen_class["Emp ID"]
-        ]["Faculty Name"].unique().tolist()
-
-        if not eligible_peers:
-            peer_assignments.append({
-                "Week Start Date": week_start_str,
-                "Week End Date": week_end_str,
-                "Day": day,
-                "Time Slot": slot,
-                "Faculty Name": chosen_class["Faculty Name"],
-                "Class": chosen_class["Subject"],
-                "Peer Faculty": "None",
-                "Alternative Faculty": "None"
-            })
-            continue
-
-        available_peers = [p for p in eligible_peers if p not in assigned_peers]
-        if not available_peers:
-            assigned_peers.clear()
-            available_peers = eligible_peers
-
-        peer = random.choice(available_peers)
-        assigned_peers.add(peer)
-
-        alternatives = [p for p in eligible_peers if p != peer]
-        random.shuffle(alternatives)
-        alternatives = alternatives[:3]
-
-        peer_assignments.append({
-            "Week Start Date": week_start_str,
-            "Week End Date": week_end_str,
-            "Day": day,
-            "Time Slot": slot,
-            "Faculty Name": chosen_class["Faculty Name"],
-            "Class": chosen_class["Subject"],
-            "Peer Faculty": peer,
-            "Alternative Faculty": ", ".join(alternatives) if alternatives else "None"
-        })
-
-    peer_df = pd.DataFrame(peer_assignments)
-    return peer_df
-
-
-# -----------------------------------
-# Streamlit Dashboard
-# -----------------------------------
-def main():
-    st.set_page_config(page_title="Peer Assignment Dashboard", layout="wide")
-    st.title("Faculty Peer Assignment Dashboard")
-
-    excel_file = "Peer_Job_Fixedslots.xlsx"
-    peer_df = generate_peer_assignments(excel_file)
-
-    # Display week info
-    week_info = peer_df[["Week Start Date", "Week End Date"]].iloc[0]
-    st.info(f"Allocation Week: {week_info['Week Start Date']}  to  {week_info['Week End Date']}")
-
-    # Sidebar filters
-    st.sidebar.header("Filters")
-    faculty_filter = st.sidebar.multiselect(
-        "Select Peer Faculty",
-        options=peer_df["Peer Faculty"].unique(),
-        default=peer_df["Peer Faculty"].unique()
-    )
-
-    class_filter = st.sidebar.multiselect(
-        "Select Subject",
-        options=peer_df["Class"].unique(),
-        default=peer_df["Class"].unique()
-    )
-
-    # Day Tabs
-    days = sorted(peer_df["Day"].unique())
-    tabs = st.tabs(days)
-
-    for i, day in enumerate(days):
-        with tabs[i]:
-            st.subheader(f"Peer Assignments – {day}")
-
-            filtered_df = peer_df[
-                (peer_df["Day"] == day) &
-                (peer_df["Peer Faculty"].isin(faculty_filter)) &
-                (peer_df["Class"].isin(class_filter))
+            possible_subjects = busy_fac[
+                (busy_fac["Day"] == day) &
+                (busy_fac["Time Slot"] == time_slot) &
+                (busy_fac["Emp ID"] != peer_emp_id)
             ]
 
-            if filtered_df.empty:
-                st.info("No assignments found.")
+            if not possible_subjects.empty:
+                chosen = possible_subjects.sample(1).iloc[0]
+                assigned_subjects.append(chosen["Subject"])
+                assigned_faculty.append(chosen["Faculty Name"])
             else:
-                st.dataframe(
-                    filtered_df[
-                        [
-                            "Week Start Date",
-                            "Week End Date",
-                            "Day",
-                            "Time Slot",
-                            "Faculty Name",
-                            "Class",
-                            "Peer Faculty",
-                            "Alternative Faculty"
-                        ]
-                    ],
-                    use_container_width=True
-                )
+                assigned_subjects.append("No Subject Available")
+                assigned_faculty.append("NA")
 
+        # -----------------------------
+        # Update Result
+        # -----------------------------
+        peerslots["Assigned Subject"] = assigned_subjects
+        peerslots["Observed Faculty"] = assigned_faculty
 
-if __name__ == "__main__":
-    main()
+        # -----------------------------
+        # Display Result
+        # -----------------------------
+        st.success(f"Assignment generated for Week: {week_seed}")
+        st.dataframe(peerslots, use_container_width=True)
+
+        # -----------------------------
+        # Prepare Excel Download
+        # -----------------------------
+        output = BytesIO()
+        peerslots.to_excel(output, index=False, engine="openpyxl")
+        output.seek(0)
+
+        output_filename = f"Peer_Duty_Subject_Assignment_Week_{week_seed}.xlsx"
+
+        st.download_button(
+            label="Download Assignment Excel",
+            data=output,
+            file_name=output_filename,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
