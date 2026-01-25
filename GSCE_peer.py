@@ -9,7 +9,7 @@ import os
 # Streamlit Page Config
 # -------------------------------------------------
 st.set_page_config(
-    page_title="Peer Duty Subject Assignment",
+    page_title="GSCE - Peer to Peer Duties Assignment for One Week",
     layout="wide"
 )
 
