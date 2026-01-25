@@ -13,6 +13,11 @@ st.set_page_config(
     layout="wide"
 )
 
+st.image(
+    "college_logo.png",
+    width=150
+)
+
 st.title("Peer Duty Subject Assignment System")
 
 st.markdown("""
