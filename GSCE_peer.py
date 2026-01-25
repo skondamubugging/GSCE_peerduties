@@ -16,23 +16,24 @@ st.set_page_config(
 st.title("Peer Duty Subject Assignment System")
 
 # -------------------------------------------------
-# Week & Date Setup
+# Generation Date (Anchor)
 # -------------------------------------------------
-today = datetime.now()
-week_seed = today.strftime("%Y-%U")
+generation_datetime = datetime.now()
+base_date = generation_datetime.date()
+week_seed = generation_datetime.strftime("%Y-%U")
 
-# Get Monday of the current week
-week_monday = today - timedelta(days=today.weekday())
+st.markdown(
+    f"""
+    **Generation Date (Start Date):** {base_date.strftime("%d-%m-%Y")}  
+    **Assignment ID (Week Seed):** {week_seed}
+    """
+)
 
-DAY_OFFSET = {
-    "monday": 0,
-    "tuesday": 1,
-    "wednesday": 2,
-    "thursday": 3,
-    "friday": 4,
-    "saturday": 5,
-    "sunday": 6
-}
+# -------------------------------------------------
+# Day Order Definition
+# -------------------------------------------------
+DAY_ORDER = ["monday", "tuesday", "wednesday", "thursday",
+             "friday", "saturday", "sunday"]
 
 # -------------------------------------------------
 # Excel File Path
@@ -42,13 +43,6 @@ FILE_PATH = "Peer_Job_Fixedslots.xlsx"
 if not os.path.exists(FILE_PATH):
     st.error("Required file `Peer_Job_Fixedslots.xlsx` not found.")
     st.stop()
-
-st.markdown(
-    f"""
-    **Assignment Week:** {week_seed}  
-    **Week Starting (Monday):** {week_monday.strftime("%d-%m-%Y")}
-    """
-)
 
 # -------------------------------------------------
 # Generate Assignment Button
@@ -72,6 +66,17 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         ].copy()
 
         # -----------------------------
+        # Determine First Day in Data
+        # -----------------------------
+        first_day_value = str(peerslots.iloc[0]["Day"]).strip().lower()
+
+        if first_day_value not in DAY_ORDER:
+            st.error("Invalid Day value found in Peerslots sheet.")
+            st.stop()
+
+        first_day_index = DAY_ORDER.index(first_day_value)
+
+        # -----------------------------
         # Assignment Logic
         # -----------------------------
         assigned_subjects = []
@@ -79,12 +84,12 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         assignment_dates = []
 
         for _, peer in peerslots.iterrows():
-            day = peer["Day"]
+            day = str(peer["Day"]).strip().lower()
             time_slot = peer["Time Slot"]
             peer_emp_id = peer["Emp ID"]
 
             possible_subjects = busy_fac[
-                (busy_fac["Day"] == day) &
+                (busy_fac["Day"].str.lower() == day) &
                 (busy_fac["Time Slot"] == time_slot) &
                 (busy_fac["Emp ID"] != peer_emp_id)
             ]
@@ -98,14 +103,12 @@ if st.button("Generate / Regenerate Weekly Assignment"):
                 assigned_faculty.append("NA")
 
             # -----------------------------
-            # Day → Date Mapping
+            # Rolling Date Assignment
             # -----------------------------
-            day_key = str(day).strip().lower()
-            if day_key in DAY_OFFSET:
-                assignment_date = week_monday + timedelta(days=DAY_OFFSET[day_key])
-                assignment_dates.append(assignment_date.strftime("%d-%m-%Y"))
-            else:
-                assignment_dates.append("Invalid Day")
+            current_day_index = DAY_ORDER.index(day)
+            day_offset = current_day_index - first_day_index
+            assignment_date = base_date + timedelta(days=day_offset)
+            assignment_dates.append(assignment_date.strftime("%d-%m-%Y"))
 
         # -----------------------------
         # Update Result
@@ -113,7 +116,7 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         peerslots["Assigned Subject"] = assigned_subjects
         peerslots["Observed Faculty"] = assigned_faculty
         peerslots["Assignment Date"] = assignment_dates
-        peerslots["Assignment Week"] = week_seed
+        peerslots["Assignment ID"] = week_seed
 
         # -----------------------------
         # Display Result
@@ -128,7 +131,7 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         peerslots.to_excel(output, index=False, engine="openpyxl")
         output.seek(0)
 
-        filename = f"Peer_Duty_Assignment_Week_{week_seed}.xlsx"
+        filename = f"Peer_Duty_Assignment_{base_date.strftime('%d-%m-%Y')}.xlsx"
 
         st.download_button(
             label="Download Assignment Excel",
