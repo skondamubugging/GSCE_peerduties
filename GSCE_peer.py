@@ -28,7 +28,7 @@ using a deterministic random seed.
 # -------------------------------------------------
 # Excel File Path (From GitHub Repo)
 # -------------------------------------------------
-FILE_PATH = "Peer_Job_Fixedslots.xlsx"
+FILE_PATH = "Peer_Job_Fixedslots_withoutsecondperson.xlsx"
 
 if not os.path.exists(FILE_PATH):
     st.error(
