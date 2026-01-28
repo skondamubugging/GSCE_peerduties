@@ -39,9 +39,15 @@ if not os.path.exists(FILE_PATH):
 st.success("Excel file loaded from repository.")
 
 # -------------------------------------------------
+# Day Selection
+# -------------------------------------------------
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+selected_day = st.selectbox("Select Day", days)
+
+# -------------------------------------------------
 # Generate Assignment Button
 # -------------------------------------------------
-if st.button("Generate / Regenerate Weekly Assignment"):
+if st.button("Generate / Regenerate Day-wise Assignment"):
     with st.spinner("Generating assignment..."):
 
         # -----------------------------
@@ -51,17 +57,22 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         busy_fac = pd.read_excel(FILE_PATH, sheet_name="Busy_fac")
 
         # -----------------------------
-        # Filter FREE peer slots
+        # Filter FREE peer slots (Day-wise)
         # -----------------------------
         peerslots = peerslots[
-            peerslots["Status"].str.lower() == "free"
+            (peerslots["Status"].str.lower() == "free") &
+            (peerslots["Day"] == selected_day)
         ].copy()
 
+        if peerslots.empty:
+            st.warning(f"No free peer slots found for {selected_day}")
+            st.stop()
+
         # -----------------------------
-        # Weekly Random Seed
+        # Weekly + Day Seed (Deterministic)
         # -----------------------------
         week_seed = datetime.now().strftime("%Y-%U")
-        random.seed(week_seed)
+        random.seed(f"{week_seed}-{selected_day}")
 
         # -----------------------------
         # Assignment Logic
@@ -70,12 +81,11 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         assigned_faculty = []
 
         for _, peer in peerslots.iterrows():
-            day = peer["Day"]
             time_slot = peer["Time Slot"]
             peer_emp_id = peer["Emp ID"]
 
             possible_subjects = busy_fac[
-                (busy_fac["Day"] == day) &
+                (busy_fac["Day"] == selected_day) &
                 (busy_fac["Time Slot"] == time_slot) &
                 (busy_fac["Emp ID"] != peer_emp_id)
             ]
@@ -97,7 +107,7 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         # -----------------------------
         # Display Result
         # -----------------------------
-        st.success(f"Assignment generated for Week: {week_seed}")
+        st.success(f"{selected_day} Assignment generated for Week: {week_seed}")
         st.dataframe(peerslots, use_container_width=True)
 
         # -----------------------------
@@ -107,11 +117,12 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         peerslots.to_excel(output, index=False, engine="openpyxl")
         output.seek(0)
 
-        output_filename = f"Peer_Duty_Subject_Assignment_Week_{week_seed}.xlsx"
+        output_filename = f"Peer_Duty_Assignment_{selected_day}_Week_{week_seed}.xlsx"
 
         st.download_button(
-            label="Download Assignment Excel",
+            label="Download Day-wise Assignment Excel",
             data=output,
             file_name=output_filename,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+
