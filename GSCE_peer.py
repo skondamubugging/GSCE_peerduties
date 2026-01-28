@@ -13,16 +13,14 @@ st.set_page_config(
     layout="wide"
 )
 
-st.image(
-    "gitm.png",
-    width=150
-)
+st.image("gitm.png", width=150)
 
 st.title("GSCE - Peer to Peer Duties Assignment")
 
 st.markdown("""
 This system generates **weekly peer duty subject assignments**
 using a deterministic random seed.
+Each subject is assigned **only once per week**.
 """)
 
 # -------------------------------------------------
@@ -32,7 +30,7 @@ FILE_PATH = "Peer_Job_Fixedslots_withoutsecondperson.xlsx"
 
 if not os.path.exists(FILE_PATH):
     st.error(
-        "Required file `Peer_Job_Fixedslots.xlsx` not found in the repository."
+        "Required file `Peer_Job_Fixedslots_withoutsecondperson.xlsx` not found in the repository."
     )
     st.stop()
 
@@ -75,7 +73,8 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
         random.seed(f"{week_seed}-{selected_day}")
 
         # -----------------------------
-        # Assignment Logic (Subject only once per week)
+        # Assignment Logic
+        # Subject assigned only once per week
         # -----------------------------
         assigned_subjects = []
         assigned_faculty = []
@@ -93,18 +92,17 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
                 (~busy_fac["Subject"].isin(weekly_assigned_subjects))
             ]
 
-        if not possible_subjects.empty:
-            chosen = possible_subjects.sample(1).iloc[0]
-            subject = chosen["Subject"]
+            if not possible_subjects.empty:
+                chosen = possible_subjects.sample(1).iloc[0]
+                subject = chosen["Subject"]
 
-            assigned_subjects.append(subject)
-            assigned_faculty.append(chosen["Faculty Name"])
+                assigned_subjects.append(subject)
+                assigned_faculty.append(chosen["Faculty Name"])
 
-            weekly_assigned_subjects.add(subject)
-        else:
-            assigned_subjects.append("No Subject Available")
-            assigned_faculty.append("NA")
-
+                weekly_assigned_subjects.add(subject)
+            else:
+                assigned_subjects.append("No Subject Available")
+                assigned_faculty.append("NA")
 
         # -----------------------------
         # Update Result
@@ -133,4 +131,3 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
             file_name=output_filename,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
