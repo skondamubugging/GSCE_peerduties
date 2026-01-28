@@ -75,10 +75,12 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
         random.seed(f"{week_seed}-{selected_day}")
 
         # -----------------------------
-        # Assignment Logic
+        # Assignment Logic (Subject only once per week)
         # -----------------------------
         assigned_subjects = []
         assigned_faculty = []
+
+        weekly_assigned_subjects = set()
 
         for _, peer in peerslots.iterrows():
             time_slot = peer["Time Slot"]
@@ -87,16 +89,22 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
             possible_subjects = busy_fac[
                 (busy_fac["Day"] == selected_day) &
                 (busy_fac["Time Slot"] == time_slot) &
-                (busy_fac["Emp ID"] != peer_emp_id)
+                (busy_fac["Emp ID"] != peer_emp_id) &
+                (~busy_fac["Subject"].isin(weekly_assigned_subjects))
             ]
 
-            if not possible_subjects.empty:
-                chosen = possible_subjects.sample(1).iloc[0]
-                assigned_subjects.append(chosen["Subject"])
-                assigned_faculty.append(chosen["Faculty Name"])
-            else:
-                assigned_subjects.append("No Subject Available")
-                assigned_faculty.append("NA")
+        if not possible_subjects.empty:
+            chosen = possible_subjects.sample(1).iloc[0]
+            subject = chosen["Subject"]
+
+            assigned_subjects.append(subject)
+            assigned_faculty.append(chosen["Faculty Name"])
+
+            weekly_assigned_subjects.add(subject)
+        else:
+            assigned_subjects.append("No Subject Available")
+            assigned_faculty.append("NA")
+
 
         # -----------------------------
         # Update Result
