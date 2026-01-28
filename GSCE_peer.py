@@ -92,7 +92,7 @@ if st.button("Generate / Regenerate Weekly Assignment"):
         # Update Result
         # -----------------------------
         peerslots["Assigned Subject"] = assigned_subjects
-        peerslots["Observed Faculty"] = assigned_faculty
+        peerslots["Teaching Faculty"] = assigned_faculty
 
         # -----------------------------
         # Display Result
