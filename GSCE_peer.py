@@ -116,8 +116,8 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
 
         assigned_subjects.append(chosen["Subject"])
         assigned_faculty.append(chosen["Faculty Name"])
-        assigned_building.append(chosen["Building"] & chosen["Room No."])
-        #assigned_room.append(chosen["Room No."])
+        assigned_building.append(chosen["Building"])
+        assigned_room.append(chosen["Room No."])
 
         weekly_assigned_subjects.add(chosen["Subject"])
 
