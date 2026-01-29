@@ -135,7 +135,7 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
 
     final_df = peerslots[
         [
-            "Date",
+            #"Date",
             "Day",
             "Time Slot",
             "Peer Faculty Name",
@@ -230,7 +230,7 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
 
         final_df = peerslots[
             [
-                "Date",
+                #"Date",
                 "Day",
                 "Time Slot",
                 "Peer Faculty Name",
