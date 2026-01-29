@@ -10,10 +10,19 @@ import os
 # -------------------------------------------------
 def extract_mail_slot(time_slot):
     start = time_slot.split("-")[0].strip()
-    try:
-        return datetime.strptime(start, "%I:%M %p").strftime("%H:%M")
-    except:
-        return datetime.strptime(start, "%H:%M").strftime("%H:%M")
+
+    # Case 1: AM/PM explicitly mentioned
+    if "AM" in start.upper() or "PM" in start.upper():
+        return datetime.strptime(start.upper(), "%I:%M %p").strftime("%H:%M")
+
+    # Case 2: No AM/PM → apply academic rule
+    hour, minute = map(int, start.split(":"))
+
+    # Afternoon assumption for 1:00–6:59
+    if 1 <= hour <= 6:
+        hour += 12
+
+    return f"{hour:02d}:{minute:02d}"
 
 # -------------------------------------------------
 # Streamlit Page Config
