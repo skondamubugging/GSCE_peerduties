@@ -129,7 +129,7 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
     peerslots["Teaching Faculty"] = assigned_faculty
     peerslots["Room"] = ""  # Room intentionally blank
     peerslots["Date"] = datetime.now().strftime("%d-%m-%Y")
-    peerslots["Peer Faculty Name"] = peerslots["Faculty Name"]
+    peerslots["Peer Faculty Name"] = peerslots["Peer Name"]
     peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
 
     final_df = peerslots[
