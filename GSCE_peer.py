@@ -132,6 +132,7 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
     peerslots["Assigned Subject"] = assigned_subjects
     peerslots["Teaching Faculty"] = assigned_faculty
     peerslots["Room"] = assigned_room
+    peerslots["Email Id"] = peerslots["Peer Email"]
     peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
 
     final_df = peerslots[
@@ -225,10 +226,11 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
             weekly_assigned_subjects.add(chosen["Subject"])
 
         peerslots["Date"] = datetime.now().strftime("%d-%m-%Y")
-        peerslots["Peer Faculty Name"] = peerslots["Faculty Name"]
+        peerslots["Peer Faculty Name"] = peerslots["Peer Name"]
         peerslots["Assigned Subject"] = assigned_subjects
         peerslots["Teaching Faculty"] = assigned_faculty
         peerslots["Room"] = assigned_room
+        peerslots["Email Id"] = peerslots["Peer Email"]
         peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
 
         final_df = peerslots[
