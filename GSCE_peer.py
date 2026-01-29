@@ -118,9 +118,7 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
 
         assigned_subjects.append(chosen["Subject"])
         assigned_faculty.append(chosen["Faculty Name"])
-        assigned_room.append(
-            f"{chosen['Building']} - {chosen['Room No.']}"
-        )
+        assigned_room.append(chosen["Building"])
 
         weekly_assigned_subjects.add(chosen["Subject"])
 
@@ -222,9 +220,7 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
 
             assigned_subjects.append(chosen["Subject"])
             assigned_faculty.append(chosen["Faculty Name"])
-            assigned_room.append(
-                f"{chosen['Building']} - {chosen['Room No.']}"
-            )
+            assigned_room.append(chosen["Building"])
 
             weekly_assigned_subjects.add(chosen["Subject"])
 
