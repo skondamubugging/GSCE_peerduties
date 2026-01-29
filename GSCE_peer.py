@@ -78,6 +78,8 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
         # -----------------------------
         assigned_subjects = []
         assigned_faculty = []
+        assigned_building = []
+        assigned_room = []
 
         weekly_assigned_subjects = set()
 
@@ -89,26 +91,33 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
                 (busy_fac["Day"] == selected_day) &
                 (busy_fac["Time Slot"] == time_slot) &
                 (busy_fac["Emp ID"] != peer_emp_id) &
+                (busy_fac["Status"].str.lower() == "busy") &
                 (~busy_fac["Subject"].isin(weekly_assigned_subjects))
             ]
 
             if not possible_subjects.empty:
                 chosen = possible_subjects.sample(1).iloc[0]
-                subject = chosen["Subject"]
 
-                assigned_subjects.append(subject)
+                assigned_subjects.append(chosen["Subject"])
                 assigned_faculty.append(chosen["Faculty Name"])
+                assigned_building.append(chosen["Building"])
+                assigned_room.append(chosen["Room No."])
 
-                weekly_assigned_subjects.add(subject)
+                weekly_assigned_subjects.add(chosen["Subject"])
             else:
                 assigned_subjects.append("No Subject Available")
                 assigned_faculty.append("NA")
+                assigned_building.append("NA")
+                assigned_room.append("NA")
+
 
         # -----------------------------
         # Update Result
         # -----------------------------
         peerslots["Assigned Subject"] = assigned_subjects
         peerslots["Teaching Faculty"] = assigned_faculty
+        peerslots["Building"] = assigned_building
+        peerslots["Room No."] = assigned_room
 
         # -----------------------------
         # Display Result
