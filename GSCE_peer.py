@@ -60,7 +60,7 @@ week_seed = datetime.now().strftime("%Y-%U")
 random.seed(week_seed)
 
 # -------------------------------------------------
-# Days List
+# Days
 # -------------------------------------------------
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
@@ -84,6 +84,7 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
 
     assigned_subjects = []
     assigned_faculty = []
+    assigned_room = []
 
     for _, peer in peerslots.iterrows():
 
@@ -119,18 +120,18 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
 
         assigned_subjects.append(chosen["Subject"])
         assigned_faculty.append(chosen["Faculty Name"])
+        assigned_room.append(chosen["Building"])
 
         weekly_assigned_subjects.add(chosen["Subject"])
 
     # -------------------------------------------------
     # Output Formatting
     # -------------------------------------------------
+    peerslots["Date"] = datetime.now().strftime("%d-%m-%Y")
+    peerslots["Peer Faculty Name"] = peerslots["Faculty Name"]
     peerslots["Assigned Subject"] = assigned_subjects
     peerslots["Teaching Faculty"] = assigned_faculty
-    peerslots["Room"] = ""  # Room intentionally blank
-    peerslots["Date"] = datetime.now().strftime("%d-%m-%Y")
-    peerslots["Peer Faculty Name"] = peerslots["Peer Name"]
-    peerslots["Email Id"] = peerslots["Peer Email"]
+    peerslots["Room"] = assigned_room
     peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
 
     final_df = peerslots[
@@ -183,6 +184,7 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
 
         assigned_subjects = []
         assigned_faculty = []
+        assigned_room = []
 
         for _, peer in peerslots.iterrows():
 
@@ -218,14 +220,15 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
 
             assigned_subjects.append(chosen["Subject"])
             assigned_faculty.append(chosen["Faculty Name"])
+            assigned_room.append(chosen["Building"])
 
             weekly_assigned_subjects.add(chosen["Subject"])
 
-        peerslots["Assigned Subject"] = assigned_subjects
-        peerslots["Teaching Faculty"] = assigned_faculty
-        peerslots["Room"] = ""
         peerslots["Date"] = datetime.now().strftime("%d-%m-%Y")
         peerslots["Peer Faculty Name"] = peerslots["Faculty Name"]
+        peerslots["Assigned Subject"] = assigned_subjects
+        peerslots["Teaching Faculty"] = assigned_faculty
+        peerslots["Room"] = assigned_room
         peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
 
         final_df = peerslots[
