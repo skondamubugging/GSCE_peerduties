@@ -128,7 +128,7 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
     # Output Formatting
     # -------------------------------------------------
     peerslots["Date"] = datetime.now().strftime("%d-%m-%Y")
-    peerslots["Peer Faculty Name"] = peerslots["Faculty Name"]
+    peerslots["Peer Faculty Name"] = peerslots["Peer Name"]
     peerslots["Assigned Subject"] = assigned_subjects
     peerslots["Teaching Faculty"] = assigned_faculty
     peerslots["Room"] = assigned_room
