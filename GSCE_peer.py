@@ -17,10 +17,9 @@ st.image("gitm.png", width=150)
 st.title("GSCE - Peer to Peer Duties Assignment")
 
 st.markdown("""
-This system generates **day-wise and weekly peer duty assignments**
-using a **deterministic weekly seed**.
-Each subject is assigned **only once per week when possible**,
-and **always assigned at any cost** using fallback rules.
+Peer-to-peer learning is a collaborative approach where faculty members visit an 
+assigned class to learn from one another by sharing experiences, teaching strategies, 
+and best practices in a real classroom setting.
 """)
 
 # -------------------------------------------------
