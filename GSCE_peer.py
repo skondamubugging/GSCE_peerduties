@@ -26,7 +26,7 @@ Each subject is assigned **only once per week**.
 # -------------------------------------------------
 # Excel File Path (From GitHub Repo)
 # -------------------------------------------------
-FILE_PATH = "Peer_Job_Fixedslots_withoutsecondperson.xlsx"
+FILE_PATH = "Peer_Job_Fixedslots_withoutsecondperson_emails.xlsx"
 
 if not os.path.exists(FILE_PATH):
     st.error(
