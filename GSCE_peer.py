@@ -6,6 +6,16 @@ from io import BytesIO
 import os
 
 # -------------------------------------------------
+# Helper Function
+# -------------------------------------------------
+def extract_mail_slot(time_slot):
+    start = time_slot.split("-")[0].strip()
+    try:
+        return datetime.strptime(start, "%I:%M %p").strftime("%H:%M")
+    except:
+        return datetime.strptime(start, "%H:%M").strftime("%H:%M")
+
+# -------------------------------------------------
 # Streamlit Page Config
 # -------------------------------------------------
 st.set_page_config(
@@ -34,14 +44,11 @@ if not os.path.exists(FILE_PATH):
 st.success("Excel file loaded successfully.")
 
 # -------------------------------------------------
-# Load Excel Once
+# Load Excel
 # -------------------------------------------------
 peerslots_all = pd.read_excel(FILE_PATH, sheet_name="Peerslots")
 busy_fac = pd.read_excel(FILE_PATH, sheet_name="Busy_fac")
 
-# -------------------------------------------------
-# Safety Check
-# -------------------------------------------------
 if busy_fac.empty:
     st.error("Busy_fac sheet is empty. Cannot generate assignments.")
     st.stop()
@@ -76,14 +83,12 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
 
     assigned_subjects = []
     assigned_faculty = []
-    assigned_building = []
     assigned_room = []
 
     for _, peer in peerslots.iterrows():
         time_slot = peer["Time Slot"]
         peer_emp_id = peer["Emp ID"]
 
-        # Level 1: Ideal
         possible = busy_fac[
             (busy_fac["Day"] == selected_day) &
             (busy_fac["Time Slot"] == time_slot) &
@@ -91,7 +96,6 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
             (~busy_fac["Subject"].isin(weekly_assigned_subjects))
         ]
 
-        # Level 2: Allow subject repetition
         if possible.empty:
             possible = busy_fac[
                 (busy_fac["Day"] == selected_day) &
@@ -99,38 +103,59 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
                 (busy_fac["Emp ID"] != peer_emp_id)
             ]
 
-        # Level 3: Allow faculty clash
         if possible.empty:
             possible = busy_fac[
                 (busy_fac["Day"] == selected_day) &
                 (busy_fac["Time Slot"] == time_slot)
             ]
 
-        # Level 4: Ignore time slot
         if possible.empty:
             possible = busy_fac[
-                (busy_fac["Day"] == selected_day)
+                busy_fac["Day"] == selected_day
             ]
 
         chosen = possible.sample(1).iloc[0]
 
         assigned_subjects.append(chosen["Subject"])
         assigned_faculty.append(chosen["Faculty Name"])
-        assigned_building.append(chosen["Building"])
-        assigned_room.append(chosen["Room No."])
+        assigned_room.append(
+            f"{chosen['Building']} - {chosen['Room No.']}"
+        )
 
         weekly_assigned_subjects.add(chosen["Subject"])
 
+    # -------------------------------------------------
+    # Output Formatting
+    # -------------------------------------------------
     peerslots["Assigned Subject"] = assigned_subjects
     peerslots["Teaching Faculty"] = assigned_faculty
-    peerslots["Building"] = assigned_building
-    peerslots["Room No."] = assigned_room
+    peerslots["Room"] = assigned_room
+
+    peerslots.insert(0, "S.No", range(1, len(peerslots) + 1))
+    peerslots["Date"] = datetime.now().strftime("%d-%m-%Y")
+    peerslots["Peer Faculty Name"] = peerslots["Faculty Name"]
+    peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
+
+    final_columns = [
+        "S.No",
+        "Date",
+        "Day",
+        "Time Slot",
+        "Peer Faculty Name",
+        "Email Id",
+        "Assigned Subject",
+        "Room",
+        "Teaching Faculty",
+        "Mail Slot"
+    ]
+
+    final_df = peerslots[final_columns]
 
     st.success(f"{selected_day} Assignment Generated (Week {week_seed})")
-    st.dataframe(peerslots, use_container_width=True)
+    st.dataframe(final_df, use_container_width=True)
 
     output = BytesIO()
-    peerslots.to_excel(output, index=False, engine="openpyxl")
+    final_df.to_excel(output, index=False, engine="openpyxl")
     output.seek(0)
 
     st.download_button(
@@ -162,14 +187,12 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
 
         assigned_subjects = []
         assigned_faculty = []
-        assigned_building = []
         assigned_room = []
 
         for _, peer in peerslots.iterrows():
             time_slot = peer["Time Slot"]
             peer_emp_id = peer["Emp ID"]
 
-            # Level 1
             possible = busy_fac[
                 (busy_fac["Day"] == day) &
                 (busy_fac["Time Slot"] == time_slot) &
@@ -177,7 +200,6 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
                 (~busy_fac["Subject"].isin(weekly_assigned_subjects))
             ]
 
-            # Level 2
             if possible.empty:
                 possible = busy_fac[
                     (busy_fac["Day"] == day) &
@@ -185,37 +207,53 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
                     (busy_fac["Emp ID"] != peer_emp_id)
                 ]
 
-            # Level 3
             if possible.empty:
                 possible = busy_fac[
                     (busy_fac["Day"] == day) &
                     (busy_fac["Time Slot"] == time_slot)
                 ]
 
-            # Level 4
             if possible.empty:
                 possible = busy_fac[
-                    (busy_fac["Day"] == day)
+                    busy_fac["Day"] == day
                 ]
 
             chosen = possible.sample(1).iloc[0]
 
             assigned_subjects.append(chosen["Subject"])
             assigned_faculty.append(chosen["Faculty Name"])
-            assigned_building.append(chosen["Building"])
-            assigned_room.append(chosen["Room No."])
+            assigned_room.append(
+                f"{chosen['Building']} - {chosen['Room No.']}"
+            )
 
             weekly_assigned_subjects.add(chosen["Subject"])
 
         peerslots["Assigned Subject"] = assigned_subjects
         peerslots["Teaching Faculty"] = assigned_faculty
-        peerslots["Building"] = assigned_building
-        peerslots["Room No."] = assigned_room
+        peerslots["Room"] = assigned_room
 
-        weekly_result.append(peerslots)
+        peerslots.insert(0, "S.No", range(1, len(peerslots) + 1))
+        peerslots["Date"] = datetime.now().strftime("%d-%m-%Y")
+        peerslots["Peer Faculty Name"] = peerslots["Faculty Name"]
+        peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
+
+        final_df = peerslots[[
+            "S.No",
+            "Date",
+            "Day",
+            "Time Slot",
+            "Peer Faculty Name",
+            "Email Id",
+            "Assigned Subject",
+            "Room",
+            "Teaching Faculty",
+            "Mail Slot"
+        ]]
+
+        weekly_result.append(final_df)
 
         st.subheader(day)
-        st.dataframe(peerslots, use_container_width=True)
+        st.dataframe(final_df, use_container_width=True)
 
     if weekly_result:
         weekly_df = pd.concat(weekly_result, ignore_index=True)
