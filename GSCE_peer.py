@@ -6,7 +6,7 @@ from io import BytesIO
 import os
 
 # -------------------------------------------------
-# Helper Function
+# Helper Function: Extract start time in 24-hour format
 # -------------------------------------------------
 def extract_mail_slot(time_slot):
     start = time_slot.split("-")[0].strip()
@@ -44,7 +44,7 @@ if not os.path.exists(FILE_PATH):
 st.success("Excel file loaded successfully.")
 
 # -------------------------------------------------
-# Load Excel
+# Load Excel Sheets
 # -------------------------------------------------
 peerslots_all = pd.read_excel(FILE_PATH, sheet_name="Peerslots")
 busy_fac = pd.read_excel(FILE_PATH, sheet_name="Busy_fac")
@@ -60,7 +60,7 @@ week_seed = datetime.now().strftime("%Y-%U")
 random.seed(week_seed)
 
 # -------------------------------------------------
-# Days
+# Days List
 # -------------------------------------------------
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
@@ -70,6 +70,7 @@ days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 selected_day = st.selectbox("Select Day (Day-wise Generation)", days)
 
 if st.button("Generate / Regenerate Day-wise Assignment"):
+
     weekly_assigned_subjects = set()
 
     peerslots = peerslots_all[
@@ -83,9 +84,9 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
 
     assigned_subjects = []
     assigned_faculty = []
-    assigned_room = []
 
     for _, peer in peerslots.iterrows():
+
         time_slot = peer["Time Slot"]
         peer_emp_id = peer["Emp ID"]
 
@@ -118,7 +119,6 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
 
         assigned_subjects.append(chosen["Subject"])
         assigned_faculty.append(chosen["Faculty Name"])
-        assigned_room.append(chosen["Building"])
 
         weekly_assigned_subjects.add(chosen["Subject"])
 
@@ -127,27 +127,24 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
     # -------------------------------------------------
     peerslots["Assigned Subject"] = assigned_subjects
     peerslots["Teaching Faculty"] = assigned_faculty
-    peerslots["Room"] = assigned_room
-
-    peerslots.insert(0, "S.No", range(1, len(peerslots) + 1))
+    peerslots["Room"] = ""  # Room intentionally blank
     peerslots["Date"] = datetime.now().strftime("%d-%m-%Y")
     peerslots["Peer Faculty Name"] = peerslots["Faculty Name"]
     peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
 
-    final_columns = [
-        "S.No",
-        "Date",
-        "Day",
-        "Time Slot",
-        "Peer Faculty Name",
-        "Email Id",
-        "Assigned Subject",
-        "Room",
-        "Teaching Faculty",
-        "Mail Slot"
+    final_df = peerslots[
+        [
+            "Date",
+            "Day",
+            "Time Slot",
+            "Peer Faculty Name",
+            "Email Id",
+            "Assigned Subject",
+            "Room",
+            "Teaching Faculty",
+            "Mail Slot"
+        ]
     ]
-
-    final_df = peerslots[final_columns]
 
     st.success(f"{selected_day} Assignment Generated (Week {week_seed})")
     st.dataframe(final_df, use_container_width=True)
@@ -185,9 +182,9 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
 
         assigned_subjects = []
         assigned_faculty = []
-        assigned_room = []
 
         for _, peer in peerslots.iterrows():
+
             time_slot = peer["Time Slot"]
             peer_emp_id = peer["Emp ID"]
 
@@ -220,31 +217,29 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
 
             assigned_subjects.append(chosen["Subject"])
             assigned_faculty.append(chosen["Faculty Name"])
-            assigned_room.append(chosen["Building"])
 
             weekly_assigned_subjects.add(chosen["Subject"])
 
         peerslots["Assigned Subject"] = assigned_subjects
         peerslots["Teaching Faculty"] = assigned_faculty
-        peerslots["Room"] = assigned_room
-
-        peerslots.insert(0, "S.No", range(1, len(peerslots) + 1))
+        peerslots["Room"] = ""
         peerslots["Date"] = datetime.now().strftime("%d-%m-%Y")
         peerslots["Peer Faculty Name"] = peerslots["Faculty Name"]
         peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
 
-        final_df = peerslots[[
-            "S.No",
-            "Date",
-            "Day",
-            "Time Slot",
-            "Peer Faculty Name",
-            "Email Id",
-            "Assigned Subject",
-            "Room",
-            "Teaching Faculty",
-            "Mail Slot"
-        ]]
+        final_df = peerslots[
+            [
+                "Date",
+                "Day",
+                "Time Slot",
+                "Peer Faculty Name",
+                "Email Id",
+                "Assigned Subject",
+                "Room",
+                "Teaching Faculty",
+                "Mail Slot"
+            ]
+        ]
 
         weekly_result.append(final_df)
 
