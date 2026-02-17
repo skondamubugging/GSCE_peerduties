@@ -95,6 +95,7 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
     assigned_faculty = []
     assigned_room = []
     assigned_sem = []
+    assigned_teaching_emp_id = []   # NEW LIST
 
     for _, peer in peerslots.iterrows():
 
@@ -132,6 +133,7 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
         assigned_faculty.append(chosen["Faculty Name"])
         assigned_room.append(chosen["Building"])
         assigned_sem.append(chosen["Sem"])
+        assigned_teaching_emp_id.append(chosen["Emp ID"])  # CAPTURE EMP ID
 
         weekly_assigned_subjects.add(chosen["Subject"])
 
@@ -140,6 +142,7 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
     peerslots["Assigned Subject"] = assigned_subjects
     peerslots["Sem"] = assigned_sem
     peerslots["Teaching Faculty"] = assigned_faculty
+    peerslots["Teaching Faculty Emp ID"] = assigned_teaching_emp_id  # NEW COLUMN
     peerslots["Room"] = assigned_room
     peerslots["Email Id"] = peerslots["Peer Email"]
     peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
@@ -155,6 +158,7 @@ if st.button("Generate / Regenerate Day-wise Assignment"):
             "Sem",
             "Room",
             "Teaching Faculty",
+            "Teaching Faculty Emp ID",   # INCLUDED
             "Mail Slot"
         ]
     ]
@@ -197,6 +201,7 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
         assigned_faculty = []
         assigned_room = []
         assigned_sem = []
+        assigned_teaching_emp_id = []   # NEW LIST
 
         for _, peer in peerslots.iterrows():
 
@@ -234,6 +239,7 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
             assigned_faculty.append(chosen["Faculty Name"])
             assigned_room.append(chosen["Building"])
             assigned_sem.append(chosen["Sem"])
+            assigned_teaching_emp_id.append(chosen["Emp ID"])  # CAPTURE EMP ID
 
             weekly_assigned_subjects.add(chosen["Subject"])
 
@@ -242,6 +248,7 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
         peerslots["Assigned Subject"] = assigned_subjects
         peerslots["Sem"] = assigned_sem
         peerslots["Teaching Faculty"] = assigned_faculty
+        peerslots["Teaching Faculty Emp ID"] = assigned_teaching_emp_id  # NEW COLUMN
         peerslots["Room"] = assigned_room
         peerslots["Email Id"] = peerslots["Peer Email"]
         peerslots["Mail Slot"] = peerslots["Time Slot"].apply(extract_mail_slot)
@@ -257,6 +264,7 @@ if st.button("Generate Weekly Assignment (Mon–Sat)"):
                 "Sem",
                 "Room",
                 "Teaching Faculty",
+                "Teaching Faculty Emp ID",   # INCLUDED
                 "Mail Slot"
             ]
         ]
